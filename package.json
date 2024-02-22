@@ -12,7 +12,7 @@
     "mysql2": "^3.6.5"
   },
   "engines": {
-    "node": "20.x"
+    "node": "18.x"
   },
   "scripts": {
     "start": "node Server.js",
