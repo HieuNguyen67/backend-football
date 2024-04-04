@@ -2,7 +2,6 @@
 const mysql = require("mysql2");
 const dotenv = require("dotenv");
 
-// Đọc các biến môi trường từ tệp .env
 dotenv.config();
 
 const dbConfig = {

@@ -29,7 +29,6 @@ app.post("/login", (req, res) => {
 
     const admin = results[0];
 
-    // Kiểm tra mật khẩu, không sử dụng bcrypt trong ví dụ này
     if (admin.password !== password) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -43,7 +42,6 @@ app.post("/login", (req, res) => {
     res.status(200).json({ token, username: admin.username });
   });
 });
-// Endpoint để lấy danh sách người dùng
 app.get("/lay-danh-sach-user", (req, res) => {
   const query = "SELECT * FROM user";
   db.query(query, (err, results) => {
@@ -69,7 +67,6 @@ app.get("/lay-danh-sach-guide", (req, res) => {
     }
   });
 });
-// Endpoint để xoá người dùng
 app.delete("/xoa-user/:userID", (req, res) => {
   const userID = req.params.userID;
   const query = "DELETE FROM user WHERE id = ?";
@@ -127,7 +124,6 @@ app.get("/lay-thong-tin-guide/:guideID", (req, res) => {
   });
 });
 
-// Endpoint để cập nhật thông tin người dùng
 app.put("/cap-nhat-user/:userID", (req, res) => {
   const userID = req.params.userID;
   const updatedUser = req.body;
@@ -154,7 +150,6 @@ app.put("/cap-nhat-guide/:guideID", (req, res) => {
     }
   });
 });
-// Endpoint để lấy thông tin tour theo ID
 app.get("/lay-thong-tin-tour/:tourID", (req, res) => {
   const { tourID } = req.params;
 
@@ -165,7 +160,6 @@ app.get("/lay-thong-tin-tour/:tourID", (req, res) => {
       res.status(500).json({ error: "Lỗi máy chủ nội bộ" });
     } else {
       const tourInfo = results[0];
-      // Clone the date object to avoid modifying the original object
       const startDate = new Date(tourInfo.start_date);
       startDate.setDate(startDate.getDate() + 1);
       const formattedStartDate = startDate.toISOString().split("T")[0];
@@ -183,7 +177,6 @@ app.get("/lay-thong-tin-tour/:tourID", (req, res) => {
   });
 });
 
-// Endpoint để lấy danh sách tour
 app.get("/lay-danh-sach-tour", (req, res) => {
   const query = "SELECT * FROM tour";
   db.query(query, (err, results) => {
@@ -191,7 +184,6 @@ app.get("/lay-danh-sach-tour", (req, res) => {
       console.error("Lỗi khi lấy danh sách tour:", err);
       res.status(500).json({ error: "Lỗi máy chủ nội bộ" });
     } else {
-      // Định dạng ngày trước khi gửi về frontend (nếu cần)
       const formattedTours = results.map((tour) => ({
         ...tour,
         start_date: tour.start_date.toISOString().split("T")[0],
@@ -216,7 +208,6 @@ app.put("/cap-nhat-tour/:tourID", (req, res) => {
   });
 });
 
-// Endpoint để lấy danh sách hình ảnh liên kết với tour
 app.get("/lay-hinh-anh-tour/:tourID", (req, res) => {
   const tourID = req.params.tourID;
   const query = "SELECT image FROM image WHERE tour_id = ?";
@@ -225,7 +216,6 @@ app.get("/lay-hinh-anh-tour/:tourID", (req, res) => {
       console.error("Lỗi khi lấy hình ảnh tour:", err);
       res.status(500).json({ error: "Lỗi máy chủ nội bộ" });
     } else {
-      // Trả về mảng các chuỗi base64 đại diện cho hình ảnh
       const base64Images = results.map((result) =>
         result.image.toString("base64")
       );
@@ -235,11 +225,9 @@ app.get("/lay-hinh-anh-tour/:tourID", (req, res) => {
 });
 
 
-// Endpoint để cập nhật hình ảnh cho tour
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// Endpoint để cập nhật hình ảnh của tour theo kiểu BLOB
 app.put(
   "/cap-nhat-hinh-anh-tour/:tourID",
   upload.array("images"),
@@ -247,13 +235,11 @@ app.put(
     const tourID = req.params.tourID;
     const images = req.files;
 
-    // Xóa hình ảnh cũ
     db.query("DELETE FROM image WHERE tour_id = ?", [tourID], (err, result) => {
       if (err) {
         console.error("Lỗi khi xóa hình ảnh cũ:", err);
         res.status(500).json({ error: "Lỗi máy chủ nội bộ" });
       } else {
-        // Thêm hình ảnh mới
         const insertQuery = "INSERT INTO image (tour_id, image) VALUES ?";
         const values = images.map((image) => [tourID, image.buffer]);
 
@@ -270,7 +256,6 @@ app.put(
   }
 );
 
-// Route để lấy danh sách tour
 app.get("/get-tours", (req, res) => {
   const getToursQuery =
     "SELECT t.*, i.image, g.fullname AS guide_name FROM tour t " +
@@ -283,22 +268,18 @@ app.get("/get-tours", (req, res) => {
       console.error("Error fetching tours:", err);
       res.status(500).json({ message: "Internal server error" });
     } else {
-      // Process the result to convert the image to base64
       result.forEach((tour) => {
         if (tour.image) {
           tour.image = tour.image.toString("base64");
         }
       });
 
-      // Group guides by tour
       const toursWithGuides = result.reduce((acc, tour) => {
         const existingTour = acc.find((item) => item.id === tour.id);
 
         if (existingTour) {
-          // Add guide name to the existing tour
           existingTour.guides.push(tour.guide_name);
         } else {
-          // Create a new tour with the guide name
           const newTour = {
             ...tour,
             guides: tour.guide_name ? [tour.guide_name] : [],
@@ -316,7 +297,6 @@ app.get("/get-tours", (req, res) => {
 });
 
 
-// Route để xoá tour
 app.delete("/delete-tour/:tourID", (req, res) => {
   const tourID = req.params.tourID;
   const deleteTourQuery = "DELETE FROM tour WHERE id = ?";
@@ -349,7 +329,6 @@ app.get("/api/tours/:tourID", async (req, res) => {
   }
 });
 
-// Route để thêm tour với nhiều ảnh
 app.post("/add-tour", upload.array("images", 5), (req, res) => {
   const {
     name,
@@ -363,7 +342,6 @@ app.post("/add-tour", upload.array("images", 5), (req, res) => {
   } = req.body;
   const images = req.files;
 
-  // Thực hiện các bước lưu thông tin tour vào cơ sở dữ liệu
   const insertTourQuery =
     "INSERT INTO tour (name, start_date, end_date, price,child_price,infant_price, description, quantity) VALUES (?, ?, ?,?,?, ?, ?, ?)";
   db.query(
@@ -385,7 +363,6 @@ app.post("/add-tour", upload.array("images", 5), (req, res) => {
       } else {
         const tourID = result.insertId;
 
-        // Lưu ảnh vào cơ sở dữ liệu
         if (images && images.length > 0) {
           images.forEach((image, index) => {
             const insertImageQuery =
@@ -426,7 +403,6 @@ app.post("/login/user", (req, res) => {
         res.status(500).json({ error: "Internal server error" });
       } else {
         if (results.length > 0) {
-          // Tạo JWT và gửi về client
           const user = results[0];
           const token = jwt.sign({ userId: user.id }, "your_secret_key", {
             expiresIn: "1h",
@@ -444,7 +420,6 @@ app.use(bodyParser.json());
 app.post("/register", async (req, res) => {
   const { username, email, password, phone, address, fullname } = req.body;
 
-  // Kiểm tra xem username hoặc email đã tồn tại chưa
   const checkDuplicateQuery =
     "SELECT * FROM user WHERE username = ? OR email = ?";
   db.query(checkDuplicateQuery, [username, email], async (err, results) => {
@@ -453,14 +428,12 @@ app.post("/register", async (req, res) => {
       return res.status(500).json({ message: "Internal server error" });
     }
 
-    // Nếu đã tồn tại người dùng với username hoặc email
     if (results.length > 0) {
       return res
         .status(400)
         .json({ message: "Username or email already exists" });
     }
 
-    // Nếu chưa tồn tại, thực hiện thêm vào cơ sở dữ liệu
     const insertQuery =
       "INSERT INTO user (username, email, password, phone, address, fullname) VALUES (?, ?, ?, ?, ?, ?)";
     db.query(
@@ -480,9 +453,6 @@ app.post("/register", async (req, res) => {
 app.post("/guide_register", async (req, res) => {
   const { selectedTour, email, phone, address, fullname, birthdate } = req.body;
 
-  // Kiểm tra xem username hoặc email đã tồn tại chưa
-
-  // Nếu chưa tồn tại, thực hiện thêm vào cơ sở dữ liệu
   const insertQuery =
     "INSERT INTO guide (tour_id, email, phone, address, fullname,birthdate) VALUES (?,?, ?, ?, ?,?)";
   db.query(
@@ -504,19 +474,16 @@ app.post("/bookings", async (req, res) => {
   const status = "Tiếp nhận";
 
   try {
-    // Lấy giá và số lượng của tour dựa trên tourID
     const { price, child_price, infant_price, quantity } = await getTourDetails(
       tourID
     );
 
-    // Kiểm tra xem số lượng yêu cầu có sẵn không
     if (quantity < adultQuantity + childQuantity + infantQuantity) {
       return res.status(400).json({
         error: "Not enough available seats for the requested quantity.",
       });
     }
 
-    // Tính tổng giá
     const total_price =
       price * adultQuantity +
       child_price * childQuantity +
@@ -531,7 +498,6 @@ app.post("/bookings", async (req, res) => {
       userTourStatus === "Đã kết thúc" ||
       userTourStatus === "Đã huỷ"
     ) {
-      // Thực hiện query để thêm đơn đặt tour vào cơ sở dữ liệu
       const insertOrderQuery =
         "INSERT INTO `order` (user_id, tour_id, quantity, child_quantity, infant_quantity, total_price, status, booking_date_time) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
 
@@ -551,7 +517,6 @@ app.post("/bookings", async (req, res) => {
             console.error("Error creating order:", error);
             res.status(500).json({ error: "Internal Server Error" });
           } else {
-            // Cập nhật số lượng của tour trong bảng tour
             await updateTourQuantity(tourID, adultQuantity);
             await updateTourQuantity1(tourID, childQuantity);
 
@@ -582,7 +547,6 @@ app.post("/bookings", async (req, res) => {
             console.error("Error creating order:", error);
             res.status(500).json({ error: "Internal Server Error" });
           } else {
-            // Cập nhật số lượng của tour trong bảng tour
             await updateTourQuantity(tourID, adultQuantity);
             await updateTourQuantity1(tourID, childQuantity);
 
@@ -615,7 +579,6 @@ async function getUserTourStatus(userId, tourID) {
   });
 }
 
-// Hàm lấy giá và số lượng của tour dựa trên tourID
 async function getTourDetails(tourID) {
   return new Promise((resolve, reject) => {
     const selectTourDetailsQuery =
@@ -625,7 +588,6 @@ async function getTourDetails(tourID) {
         console.error("Error getting tour details:", error);
         reject(error);
       } else {
-        // Giả sử chỉ có một kết quả
         const tourDetails =
           result.length > 0
             ? result[0]
@@ -636,7 +598,6 @@ async function getTourDetails(tourID) {
   });
 }
 
-// Hàm cập nhật số lượng của tour trong bảng tour
 async function updateTourQuantity(tourID, bookedQuantity) {
   return new Promise((resolve, reject) => {
     const updateTourQuantityQuery =
@@ -691,7 +652,6 @@ app.get("/api/orders", (req, res) => {
   });
 });
 
-// API endpoint to get the details of a specific order
 app.get("/api/orders/:orderID", (req, res) => {
   const orderID = req.params.orderID;
 
@@ -745,7 +705,6 @@ app.get("/api/orders/user/:userID", (req, res) => {
       console.error("Error fetching orders by user:", err);
       res.status(500).json({ error: "Internal Server Error" });
     } else {
-      // Convert the image blob to base64 for sending it to the frontend
       const ordersWithBase64Image = results.map((order) => {
         return {
           ...order,
