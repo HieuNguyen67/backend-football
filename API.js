@@ -18,7 +18,7 @@ connection.connect((err) => {
     console.log("Connected to MySQL");
   }
 });
-const storage = multer.memoryStorage(); // Store uploaded image in memory
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -157,7 +157,7 @@ app.post("/register", (req, res) => {
 
 app.post("/add-news", upload.single("image"), (req, res) => {
   const { title, content, category_id, user_id, status } = req.body;
-  const image = req.file ? req.file.buffer : null; // Get buffer of uploaded image (if exists)
+  const image = req.file ? req.file.buffer : null; 
 
   const query = `INSERT INTO news (title, content, category_id, user_id, created_at, status) VALUES (?, ?, ?, ?, NOW(), ?)`;
   connection.query(
@@ -169,8 +169,7 @@ app.post("/add-news", upload.single("image"), (req, res) => {
         res.status(500).json({ error: "Failed to add news" });
       } else {
         if (image) {
-          // If image uploaded, insert into images table
-          const newsId = results.insertId; // Get ID of inserted news
+          const newsId = results.insertId; 
           const imageQuery = `INSERT INTO images (news_id, image_blob) VALUES (?, ?)`;
           connection.query(
             imageQuery,
@@ -192,7 +191,6 @@ app.post("/add-news", upload.single("image"), (req, res) => {
   );
 });
 
-// Endpoint to get categories
 app.get("/categories", (req, res) => {
   const query = "SELECT * FROM categories";
   connection.query(query, (err, results) => {
@@ -232,7 +230,6 @@ app.get("/news-with-images", (req, res) => {
         .status(500)
         .json({ error: "Failed to fetch approved news with images" });
     } else {
-      // Convert BLOB data to base64 URL
       results.forEach((news) => {
         if (news.image_blob) {
           news.image_blob = `data:image/png;base64,${Buffer.from(
@@ -259,7 +256,6 @@ app.get("/news-with-images-all", (req, res) => {
         .status(500)
         .json({ error: "Failed to fetch approved news with images" });
     } else {
-      // Convert BLOB data to base64 URL
       results.forEach((news) => {
         if (news.image_blob) {
           news.image_blob = `data:image/png;base64,${Buffer.from(
@@ -271,7 +267,37 @@ app.get("/news-with-images-all", (req, res) => {
     }
   });
 });
-// Endpoint để lấy chi tiết tin tức và hình ảnh
+
+app.get("/api/news-by-user", (req, res) => {
+  const userId = req.query.user_id; 
+
+  const query = `
+    SELECT news.*, images.image_blob, categories.name AS category_name
+    FROM news
+    LEFT JOIN images ON news.news_id = images.news_id
+    LEFT JOIN categories ON news.category_id = categories.category_id
+    WHERE news.user_id = ?
+  `;
+
+  connection.query(query, [userId], (err, results) => {
+     if (err) {
+       console.error(err);
+       res
+         .status(500)
+         .json({ error: "Failed to fetch approved news with images" });
+     } else {
+       results.forEach((news) => {
+         if (news.image_blob) {
+           news.image_blob = `data:image/png;base64,${Buffer.from(
+             news.image_blob
+           ).toString("base64")}`;
+         }
+       });
+       res.status(200).json(results);
+     }
+  });
+});
+
 app.get("/news/:id", (req, res) => {
   const newsId = req.params.id;
   const query = `
@@ -287,7 +313,6 @@ app.get("/news/:id", (req, res) => {
       console.error(err);
       res.status(500).json({ error: "Failed to fetch news details" });
     } else {
-      // Chuyển đổi dữ liệu hình ảnh từ blob sang base64
       results.forEach(news => {
         if (news.image_blob) {
           news.image_blob = `data:image/png;base64,${Buffer.from(news.image_blob, 'binary').toString('base64')}`;
