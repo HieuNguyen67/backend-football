@@ -324,11 +324,11 @@ app.get("/news/:id", (req, res) => {
 });
 app.put("/update-news-status/:newsId", (req, res) => {
   const { newsId } = req.params;
-  const { status } = req.body;
+  const { status, note } = req.body;
 
-  const query = `UPDATE news SET status = ? WHERE news_id = ?`;
+  const query = `UPDATE news SET status = ?, note = ? WHERE news_id = ?`;
 
-  connection.query(query, [status, newsId], (err, results) => {
+  connection.query(query, [status, note, newsId], (err, results) => {
     if (err) {
       console.error(err);
       res.status(500).json({ error: "Failed to update news status" });
@@ -337,6 +337,7 @@ app.put("/update-news-status/:newsId", (req, res) => {
     }
   });
 });
+
 
 
 
