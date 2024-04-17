@@ -4,8 +4,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const dbConfig = {
-  connectionString: process.env.DB_CONNECTION_STRING,
-  
+  connectionString: process.env.POSTGRES_URL,
 };
 
 const pool = new Pool(dbConfig);
