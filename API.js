@@ -13,9 +13,9 @@ const path = require("path");
 
 connection.connect((err) => {
   if (err) {
-    console.error("MySQL connection error:", err);
+    console.error("Postgres connection error:", err);
   } else {
-    console.log("Connected to MySQL");
+    console.log("Connected to Postgres");
   }
 });
 const storage = multer.memoryStorage();
